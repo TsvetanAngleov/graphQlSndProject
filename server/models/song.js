@@ -1,36 +1,40 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const SongSchema = new Schema({
-  title: { type: String },
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'user'
+const SongSchema = new Schema(
+  {
+    title: { type: String },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
+    },
+    lyrics: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "lyric",
+      },
+    ],
   },
-  lyrics: [{
-    type: Schema.Types.ObjectId,
-    ref: 'lyric'
-  }]
-},{ usePushEach: true });
+  { usePushEach: true }
+);
 
-SongSchema.statics.addLyric = function(id, content) {
-  const Lyric = mongoose.model('lyric');
+SongSchema.statics.addLyric = function (id, content) {
+  const Lyric = mongoose.model("lyric");
 
+  return this.findById(id).then((song) => {
+    //console.log(id);
+    const lyric = new Lyric({ content, song });
+    song.lyrics.push(lyric);
+    return Promise.all([lyric.save(), song.save()]).then(
+      ([lyric, song]) => song
+    );
+  });
+};
+
+SongSchema.statics.findLyrics = function (id) {
   return this.findById(id)
-    .then(song => {
-      //console.log(id);
-      const lyric = new Lyric({ content, song })
-      console.log(lyric);
-      song.lyrics.push(lyric)
-      return Promise.all([lyric.save(), song.save()])
-        .then(([lyric, song]) =>song);
-    });
-}
+    .populate("lyrics")
+    .then((song) => song.lyrics);
+};
 
-SongSchema.statics.findLyrics = function(id) {
-  return this.findById(id)
-    .populate('lyrics')
-    .then(song => song.lyrics);
-}
-
-mongoose.model('song', SongSchema);
+mongoose.model("song", SongSchema);

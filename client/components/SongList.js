@@ -2,24 +2,28 @@ import React, { Component } from "react";
 import gql from "graphql-tag";
 import { graphql } from "react-apollo";
 import { Link } from "react-router";
-import query from '../queries/fetchSongs';
+import query from "../queries/fetchSongsList";
 
 class SongList extends Component {
-
   deleteSongHandler(id) {
-      this.props.mutate({
-      variables: {id},
-      refetchQueries: [{query}]
-    })
+    this.props
+      .mutate({
+        variables: { id },
+      })
+      .then(() => this.props.data.refetch());
   }
   renderSongs() {
-    return this.props.data.songs.map(({id, title}) => {
+    return this.props.data.songs.map(({ id, title }) => {
       return (
         <li key={id} className="collection-item">
-          {title}
-          <i className="material-icons" onClick={()=> this.deleteSongHandler(id)}>delete</i>
+          <Link to={`song${id}`}>{title}</Link>
+          <i
+            className="material-icons"
+            onClick={() => this.deleteSongHandler(id)}
+          >
+            delete
+          </i>
         </li>
-
       );
     });
   }
@@ -31,10 +35,7 @@ class SongList extends Component {
     return (
       <div>
         <ul className="collection">{this.renderSongs()}</ul>
-        <Link
-          to="songs/new"
-          className="btn-floating btn-large red right"
-        >
+        <Link to="songs/new" className="btn-floating btn-large red right">
           <i className="material-icons">add</i>
         </Link>
       </div>
@@ -43,12 +44,11 @@ class SongList extends Component {
 }
 
 const mutation = gql`
-  mutation deleteSong($id:ID){
+  mutation deleteSong($id: ID) {
     deleteSong(id: $id) {
       id
     }
   }
 `;
 
-export default  graphql(mutation)(
-graphql(query)(SongList));
+export default graphql(mutation)(graphql(query)(SongList));
